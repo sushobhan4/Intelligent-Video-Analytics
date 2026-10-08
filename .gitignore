@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyTorch / YOLO model weights
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Video and Image files (test & raw footage)
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.flv
+*.wmv
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.gif
+
+# Surveillance Event Logs & Outputs
+*.log
+*.jsonl
+*.csv
+
+# Environments
+.env
+.venv
+env/
+venv/
+
+# IDE & OS files
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store

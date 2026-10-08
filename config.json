@@ -1,0 +1,65 @@
+{
+  "camera": {
+    "camera_id": "BOP_NORTH_SECTOR_CAM_01",
+    "location": "Border Outpost Alpha - Sector 4",
+    "target_fps": 30
+  },
+  "analytics": {
+    "confidence_threshold": 0.35,
+    "tracker": "bytetrack.yaml",
+    "model_path": "yolov8n.pt",
+    "device": "cuda",
+    "process_stride": 1
+  },
+  "virtual_fence": {
+    "enabled": true,
+    "line": [
+      [0.10, 0.65],
+      [0.90, 0.65]
+    ],
+    "direction_label_positive": "Inbound (Restricted Crossing)",
+    "direction_label_negative": "Outbound"
+  },
+  "restricted_zones": [
+    {
+      "zone_id": "ZONE_BORDER_STRIP",
+      "zone_name": "Zero-Line Restricted Strip",
+      "polygon": [
+        [0.05, 0.55],
+        [0.95, 0.55],
+        [0.95, 0.85],
+        [0.05, 0.85]
+      ],
+      "severity": "CRITICAL"
+    }
+  ],
+  "behavioral_rules": {
+    "loitering_threshold_seconds": 5.0,
+    "rapid_movement_speed_threshold": 250.0,
+    "stationary_vehicle_threshold_seconds": 8.0,
+    "alert_cooldown_seconds": 3.0
+  },
+  "night_vision": {
+    "enabled": true,
+    "low_light_threshold": 65.0,
+    "clahe_clip_limit": 2.5
+  },
+  "anpr": {
+    "enabled": true,
+    "min_plate_chars": 4,
+    "max_plate_chars": 12,
+    "regex_pattern": "^[A-Z0-9]{4,12}$"
+  },
+  "face_detection": {
+    "enabled": true,
+    "min_human_height_px": 80,
+    "scale_factor": 1.15,
+    "min_neighbors": 4
+  },
+  "logging": {
+    "log_to_console": true,
+    "log_to_file": true,
+    "json_log": true,
+    "log_interval_stats_sec": 10
+  }
+}
