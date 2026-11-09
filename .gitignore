@@ -3,11 +3,26 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# PyTorch / YOLO model weights
+# C/C++ compiled binaries & objects
+*.exe
+*.dll
+*.so
+*.dylib
+*.obj
+*.o
+*.a
+*.lib
+bin/
+
+# Machine Learning & AI Model weights
 *.pt
 *.pth
 *.onnx
 *.engine
+*.safetensors
+*.bin
+models/
+offload/
 
 # Video and Image files (test & raw footage)
 *.mp4
@@ -27,8 +42,40 @@ __pycache__/
 *.jsonl
 *.csv
 
+# Data storage, Vector DB & SQLite
+data/
+chroma_db/
+*.sqlite
+*.sqlite3
+*.db
+
+# Node & Frontend build output
+node_modules/
+dist/
+dist-ssr/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# LaTeX / Tectonic auxiliary files
+*.aux
+*.bbl
+*.blg
+*.fls
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+
 # Environments
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/

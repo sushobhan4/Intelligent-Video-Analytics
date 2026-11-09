@@ -1,65 +1,74 @@
 {
+  "project_name": "Neural CCTV Analyser",
   "camera": {
-    "camera_id": "BOP_NORTH_SECTOR_CAM_01",
-    "location": "Border Outpost Alpha - Sector 4",
+    "camera_id": "FRONT_PORCH_CAM_01",
+    "location": "Front Doorstep & Driveway",
     "target_fps": 30
   },
-  "analytics": {
-    "confidence_threshold": 0.35,
-    "tracker": "bytetrack.yaml",
-    "model_path": "yolov8n.pt",
-    "device": "cuda",
-    "process_stride": 1
+  "motion_gate": {
+    "enabled": true,
+    "chunk_size": 10,
+    "motion_threshold": 0.70,
+    "downsample_size": [320, 180]
   },
+  "zones": [
+    {
+      "zone_id": "ZONE_DOORSTEP",
+      "name": "doorstep",
+      "polygon": [
+        [0.42, 0.42],
+        [0.82, 0.42],
+        [0.82, 0.90],
+        [0.42, 0.90]
+      ],
+      "alert_level": "NOTICE"
+    },
+    {
+      "zone_id": "ZONE_DRIVEWAY",
+      "name": "driveway",
+      "polygon": [
+        [0.05, 0.35],
+        [0.40, 0.35],
+        [0.40, 0.95],
+        [0.05, 0.95]
+      ],
+      "alert_level": "INFO"
+    },
+    {
+      "zone_id": "ZONE_WALKWAY",
+      "name": "porch walkway",
+      "polygon": [
+        [0.40, 0.28],
+        [0.75, 0.28],
+        [0.75, 0.50],
+        [0.40, 0.50]
+      ],
+      "alert_level": "INFO"
+    }
+  ],
   "virtual_fence": {
     "enabled": true,
     "line": [
-      [0.10, 0.65],
-      [0.90, 0.65]
+      [0.05, 0.65],
+      [0.95, 0.65]
     ],
-    "direction_label_positive": "Inbound (Restricted Crossing)",
-    "direction_label_negative": "Outbound"
+    "direction_label_positive": "Approaching Doorstep",
+    "direction_label_negative": "Exiting Property"
   },
-  "restricted_zones": [
-    {
-      "zone_id": "ZONE_BORDER_STRIP",
-      "zone_name": "Zero-Line Restricted Strip",
-      "polygon": [
-        [0.05, 0.55],
-        [0.95, 0.55],
-        [0.95, 0.85],
-        [0.05, 0.85]
-      ],
-      "severity": "CRITICAL"
-    }
-  ],
-  "behavioral_rules": {
-    "loitering_threshold_seconds": 5.0,
-    "rapid_movement_speed_threshold": 250.0,
-    "stationary_vehicle_threshold_seconds": 8.0,
-    "alert_cooldown_seconds": 3.0
-  },
-  "night_vision": {
+  "face_recognition": {
     "enabled": true,
-    "low_light_threshold": 65.0,
-    "clahe_clip_limit": 2.5
+    "distance_threshold": 0.38,
+    "db_path": "./data/face_db",
+    "unknown_dir": "./data/unknown_faces"
   },
-  "anpr": {
-    "enabled": true,
-    "min_plate_chars": 4,
-    "max_plate_chars": 12,
-    "regex_pattern": "^[A-Z0-9]{4,12}$"
-  },
-  "face_detection": {
-    "enabled": true,
-    "min_human_height_px": 80,
-    "scale_factor": 1.15,
-    "min_neighbors": 4
+  "yolo": {
+    "model_path": "yolov8n.pt",
+    "confidence": 0.35,
+    "device": "auto"
   },
   "logging": {
-    "log_to_console": true,
-    "log_to_file": true,
-    "json_log": true,
-    "log_interval_stats_sec": 10
+    "output_log": "cctv_activity.log",
+    "json_log": "cctv_activity.jsonl",
+    "cooldown_seconds": 3.5
   }
 }

@@ -1,186 +1,175 @@
-# IBVAP: Intelligent Border Video Analytics Platform
-### AI-Powered Surveillance Platform for Existing CCTV Infrastructure
+# Neural CCTV Analyser
+### Smart Everyday Household CCTV & Automated Perimeter Monitor
 
-IBVAP transforms conventional, standard IP-based CCTV cameras at Border Out Posts (BOPs), check posts, and strategic perimeters into an intelligent automated surveillance network without requiring dedicated proprietary smart cameras or specialized hardware.
+**Neural CCTV Analyser** transforms conventional IP-based household security cameras into an intelligent, autonomous home guardian. Unlike traditional CCTV systems that continuously burn high GPU compute or send private video streams to the cloud, **Neural CCTV Analyser runs 100% locally and offline** with zero cloud subscription fees.
 
 ---
 
-## 🚀 Capabilities Implemented
+## 🌟 Key Capabilities
 
 | Capability | Module & Implementation | Output in Log |
 |---|---|---|
-| **Human Detection & Tracking** | YOLOv8 / YOLO11 + ByteTrack persistent multi-object tracking | `DETECTION_INITIAL`, Track IDs, Centroids, BBoxes |
-| **Vehicle Detection & Classification** | Deep learning classifier for Cars, Trucks, Buses, Motorcycles | `DETECTION_INITIAL` with Vehicle Classification |
-| **Face Detection** | Multi-angle Haar Cascade (Frontal + Profile) on personnel crops | `FACE_DETECTED` with facial bounding box & track association |
-| **Automatic Number Plate Recognition (ANPR)** | Morphological bumper extraction + OCR + Alphanumeric regex validation | `ANPR_PLATE_RECOGNIZED` with extracted plate string & score |
-| **Virtual Fence Intrusion Detection** | Vector line segment intersection with directional crossing calculation | `VIRTUAL_FENCE_BREACH` (Inbound / Outbound) |
-| **Restricted Zone Perimeter Defense** | Polygonal geo-fencing via `cv2.pointPolygonTest` | `RESTRICTED_ZONE_INTRUSION` |
-| **Suspicious Activity Analytics** | Behavioral engine monitoring dwell time vs displacement & velocity | `SUSPICIOUS_LOITERING`, `SUSPICIOUS_RAPID_MOVEMENT`, `SUSPICIOUS_STATIONARY_VEHICLE` |
-| **Night-Time Movement Detection** | Ambient luminance monitoring + CLAHE low-light enhancement | `ENVIRONMENT_CHANGE` (Night Mode Engaged), `NIGHT_TIME_MOVEMENT` |
-| **Time-Coded Event Logging** | Military/Security audit log with SMPTE-style timecode and JSONL | Standardized `.log` file and machine-readable `.jsonl` |
+| **10-Frame Anchor Motion Gate** | CPU-level temporal absolute differencing ($F_k - F_0$) across 10-frame chunks | Skips 90%+ of idle video, keeping GPU cool & power consumption minimal |
+| **Virtual Fencing & Household Zones** | Polygonal geo-fencing for `doorstep`, `driveway`, and `porch walkway` | Pinpoints exactly where people and vehicles are located |
+| **Local 512-d Face Vector Recognition** | Inception-ResNet-V1 + MTCNN landmark alignment | Converts face crops into 512-dimensional latent vectors |
+| **Local Vector Database Storage** | ChromaDB persistent store with cosine similarity matching | Matches family members (`Father`, `Mother`) in $<1$ ms locally |
+| **Unknown Face Triage & Tagging** | Automatic snapshot capture + interactive CLI tagging (`tag_face.py`) | Flags unknown persons, saves snapshots, and allows one-command naming |
+| **Semantic Natural Language Activity Logging** | Spatial-temporal rule synthesis + object co-occurrence | Generates human sentences like: *"Father is home. Arrived at your doorstep."* or *"A person was on your door carrying a package."* |
+| **Package & Parcel Delivery Detection** | COCO parcel classes + torso contour detection | Flags couriers and delivery packages at the doorstep |
+| **Visual Security HUD Export** | OpenCV canvas rendering with zone boundaries, bounding boxes, and activity banner | Generates annotated video (`.mp4`) with real-time security HUD |
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Architecture
 
 ```
-Intelligent-Video-Analytics/
-├── ibvap.py                       # Main core analytics platform pipeline (CLI entrypoint)
-├── config.json                    # Border perimeter configuration & rule thresholds
-├── requirements.txt               # Dependencies
-├── .gitignore                     # Ignored artifacts, videos, logs, and weights
-├── create_test_video.py           # Synthetic border surveillance video generator (optional)
-└── README.md                      # Platform documentation
+Neural-CCTV-Analyser/
+├── neural_cctv/
+│   ├── __init__.py
+│   ├── motion_gate.py         # 10-frame anchor temporal differencing (zero-GPU gatekeeper)
+│   ├── face_engine.py         # 512-d Inception-ResNet embedding & local ChromaDB store
+│   └── semantic_engine.py     # Household zones & natural language activity synthesizer
+├── data/
+│   ├── face_db/               # Local persistent ChromaDB vector database
+│   └── unknown_faces/         # Captured snapshots of unknown visitors awaiting user naming
+├── config.json                # Household zones, motion thresholds, and camera configuration
+├── neural_analyzer.py         # Main surveillance CLI entrypoint
+├── tag_face.py                # Face enrollment and tagging CLI tool
+├── create_household_video.py  # Synthetic household CCTV test footage generator
+├── requirements.txt           # Open-source dependencies
+└── README.md                  # System documentation
 ```
 
 ---
 
-## 🛠️ Usage Guide
+## ⚡ How the 10-Frame Anchor Motion Gate Works
 
-### Basic Execution (Input Video -> Time-Coded Log)
+Rather than executing heavy neural inference on all 30 frames per second:
+1. Video is split into **10-frame chunks** ($1/3$ second slices).
+2. **Frame 0** acts as the **Anchor Frame** ($F_0$).
+3. The CPU computes the mean absolute difference:
+   $$\bar{\Delta} = \frac{1}{9}\sum_{k=1}^{9} \text{mean}(|F_k - F_0|)$$
+4. If $\bar{\Delta} < \text{Threshold}$ (e.g. $0.70\text{ px}$):
+   - **Scene is Idle.** GPU inference is completely bypassed, reducing thermal load and power consumption by **50% to 95%**!
+5. If $\bar{\Delta} \ge \text{Threshold}$:
+   - **Activity Detected!** The neural pipeline (YOLO + Face Recognition + Semantics) is instantly awakened.
 
-To analyze any CCTV video file and spit out a time-coded log file:
+---
+
+## 🚀 Quickstart & Usage
+
+### 1. Ingest Video or RTSP Stream
+
+To analyze any camera feed or recorded footage:
 
 ```bash
-python ibvap.py --video path/to/cctv_stream.mp4 --output-log surveillance_events.log
+py neural_analyzer.py --video household_cctv_simulation.mp4 --save-video output_annotated.mp4
 ```
 
-### Full Options & Command Line Arguments
+### 2. Full CLI Options
 
 ```bash
-python ibvap.py \
-    --video border_cctv_simulation.mp4 \
-    --output-log border_events.log \
-    --json-log border_events.jsonl \
+py neural_analyzer.py \
+    --video path/to/cctv_stream.mp4 \
     --config config.json \
-    --save-video border_annotated.mp4 \
-    --device cuda \
-    --confidence 0.35
+    --output-log cctv_activity.log \
+    --json-log cctv_activity.jsonl \
+    --save-video annotated_cctv.mp4 \
+    --device auto
 ```
-
-### CLI Arguments Reference
 
 | Flag | Default | Description |
 |---|---|---|
-| `--video`, `-v` | *(Required)* | Path to input video file (`.mp4`, `.avi`, `.mkv`) or RTSP stream URL (`rtsp://...`) |
-| `--output-log`, `-o` | `ibvap_events.log` | Destination path for the human-readable time-coded audit log |
-| `--json-log`, `-j` | `ibvap_events.jsonl` | Optional path for machine-readable JSONL structured event log |
-| `--config`, `-c` | `config.json` | JSON configuration file for border zones, fences, and alert thresholds |
-| `--save-video`, `-s` | `None` | Optional path to export annotated MP4 video with visual bounding boxes & overlays |
-| `--display`, `-d` | `False` | Display live OpenCV preview window in real time (`'q'` to quit) |
-| `--device` | Auto (`cuda`/`cpu`) | Processing hardware device (`cuda` for GPU or `cpu`) |
-| `--confidence` | `0.35` | Object detection confidence threshold (0.1 to 1.0) |
+| `--video`, `-v` | *(Required)* | Input video file path (`.mp4`, `.avi`) or camera RTSP stream (`rtsp://...`) |
+| `--config`, `-c` | `config.json` | Configuration file containing zones and thresholds |
+| `--output-log`, `-o` | `cctv_activity.log` | Human-readable audit log file destination |
+| `--json-log`, `-j` | `cctv_activity.jsonl` | Machine-readable JSONL structured event log |
+| `--save-video`, `-s` | `None` | Optional path to export annotated MP4 video |
+| `--display`, `-d` | `False` | Display live preview window with real-time HUD overlays |
+| `--device` | `auto` | Execution device (`cuda` for GPU or `cpu`) |
 
 ---
 
-## ⚙️ Configuration (`config.json`)
+## 👤 Face Recognition & User Tagging Workflow
 
-You can customize border lines and intrusion perimeters for any camera angle by modifying `config.json`:
+### Step 1: When an Unknown Person Appears
+The system captures their face, saves a high-resolution snapshot to `./data/unknown_faces/`, and logs:
+```
+[00:00:08.033] [NOTICE] An unknown person entered your doorstep.
+```
+
+### Step 2: List Unidentified Faces
+To see pending visitors who need a name:
+```bash
+py tag_face.py --unknowns
+```
+
+### Step 3: Name the Person (Enroll into ChromaDB)
+Assign a name to the snapshot:
+```bash
+py tag_face.py --tag unknown_20261029_035507_track1.jpg --name "Father"
+```
+
+### Step 4: Next Time They Appear
+The system extracts their 512-d vector, performs a cosine search against ChromaDB ($<1\text{ ms}$), and automatically logs:
+```
+[00:00:03.500] [INFO] Father is home. Arrived at your doorstep.
+```
+
+### Step 5: Direct Photo Enrollment
+You can also directly enroll any family member from an existing photo on your computer:
+```bash
+py tag_face.py --enroll path/to/father_photo.jpg --name "Father"
+```
+
+---
+
+## ⚙️ Household Zones Configuration (`config.json`)
+
+You can define any number of custom zones to match your camera angle:
 
 ```json
 {
+  "project_name": "Neural CCTV Analyser",
   "camera": {
-    "camera_id": "BOP_NORTH_SECTOR_CAM_01",
-    "location": "Border Outpost Alpha - Sector 4"
+    "camera_id": "FRONT_PORCH_CAM_01",
+    "location": "Front Doorstep & Driveway"
   },
-  "virtual_fence": {
+  "motion_gate": {
     "enabled": true,
-    "line": [
-      [0.10, 0.65],
-      [0.90, 0.65]
-    ],
-    "direction_label_positive": "Inbound (Restricted Crossing)",
-    "direction_label_negative": "Outbound"
+    "chunk_size": 10,
+    "motion_threshold": 0.70
   },
-  "restricted_zones": [
+  "zones": [
     {
-      "zone_id": "ZONE_BORDER_STRIP",
-      "zone_name": "Zero-Line Restricted Strip",
-      "polygon": [
-        [0.05, 0.55],
-        [0.95, 0.55],
-        [0.95, 0.85],
-        [0.05, 0.85]
-      ],
-      "severity": "CRITICAL"
+      "zone_id": "ZONE_DOORSTEP",
+      "name": "doorstep",
+      "polygon": [[0.42, 0.42], [0.82, 0.42], [0.82, 0.90], [0.42, 0.90]],
+      "alert_level": "NOTICE"
+    },
+    {
+      "zone_id": "ZONE_DRIVEWAY",
+      "name": "driveway",
+      "polygon": [[0.05, 0.35], [0.40, 0.35], [0.40, 0.95], [0.05, 0.95]],
+      "alert_level": "INFO"
     }
   ],
-  "behavioral_rules": {
-    "loitering_threshold_seconds": 5.0,
-    "rapid_movement_speed_threshold": 250.0,
-    "stationary_vehicle_threshold_seconds": 8.0,
-    "alert_cooldown_seconds": 3.0
-  },
-  "night_vision": {
+  "face_recognition": {
     "enabled": true,
-    "low_light_threshold": 65.0,
-    "clahe_clip_limit": 2.5
-  },
-  "anpr": {
-    "enabled": true,
-    "min_plate_chars": 4,
-    "max_plate_chars": 12,
-    "regex_pattern": "^[A-Z0-9]{4,12}$"
+    "distance_threshold": 0.38,
+    "db_path": "./data/face_db",
+    "unknown_dir": "./data/unknown_faces"
   }
 }
 ```
 
 ---
 
-## 📊 Sample Time-Coded Log Output
+## 🧪 Testing with Synthetic Household Footage
 
-### 1. Human-Readable Audit Log (`border_events.log`)
-
-```
-==============================================================================================================
-                            IBVAP - INTELLIGENT BORDER VIDEO ANALYTICS PLATFORM
-                                    TIME-CODED SURVEILLANCE AUDIT LOG
-==============================================================================================================
-Session Start: 2026-10-08 22:47:24.858
-Camera ID    : BOP_NORTH_SECTOR_CAM_01
---------------------------------------------------------------------------------------------------------------
-WALL CLOCK               | TIMECODE     | FRAME   | SEVERITY | EVENT TYPE               | DETAILS
---------------------------------------------------------------------------------------------------------------
-2026-10-08 22:47:24.863  | 00:00:00.000 | 0       | INFO     | STREAM_INITIALIZED       | SYSTEM: Ingesting stream: border_cctv_simulation.mp4 | Resolution: 1280x720 | FPS: 30.0 | Total Frames: 360
-2026-10-08 22:47:35.390  | 00:00:00.033 | 1       | INFO     | DETECTION_INITIAL        | Person [ID #1]: New Person entered surveillance corridor at position (925, 481) (Conf: 0.87) [BBox: 878,229,972,481]
-2026-10-08 22:47:35.391  | 00:00:00.033 | 1       | CRITICAL | RESTRICTED_ZONE_INTRUSION | Person [ID #1]: Intrusion detected in Zero-Line Restricted Strip [ZONE_BORDER_STRIP] (Conf: 0.87) [BBox: 878,229,972,481]
-2026-10-08 22:47:41.073  | 00:00:03.833 | 115     | INFO     | ANPR_PLATE_RECOGNIZED    | Bus [ID #4]: License Plate recognized: [DLO1AB9876] for Bus #4 (Conf: 0.95) [BBox: 292,307,595,508]
-2026-10-08 22:47:42.612  | 00:00:05.033 | 151     | WARNING  | SUSPICIOUS_LOITERING     | Person [ID #1]: Suspicious loitering behavior detected! Dwell time: 5.0s, Net displacement: 2.8px (Conf: 0.88) [BBox: 876,230,971,480]
-2026-10-08 22:47:42.984  | 00:00:05.299 | 159     | CRITICAL | VIRTUAL_FENCE_BREACH     | Person [ID #2]: Intruder breached Border Virtual Fence line! Vector: Inbound (Restricted Crossing) (Conf: 0.86) [BBox: 720,215,818,469]
-2026-10-08 22:47:46.347  | 00:00:07.533 | 226     | INFO     | FACE_DETECTED            | Human Face [ID #3]: Facial features captured on Person #3 (Size: 26x26px) (Conf: 0.86) [BBox: 306,519,332,545]
-2026-10-08 22:47:49.740  | 00:00:09.866 | 296     | WARNING  | ENVIRONMENT_CHANGE       | SYSTEM: Night-Vision mode ENGAGED (Low-Light Condition) | Mean Luminance: 64.8/255
-2026-10-08 22:47:49.782  | 00:00:09.866 | 296     | WARNING  | NIGHT_TIME_MOVEMENT      | Person [ID #1]: Movement detected under low-light/night conditions at (931, 482) (Conf: 0.89) [BBox: 882,229,980,482]
-
-==============================================================================================================
-                                      SURVEILLANCE ANALYTICS SESSION SUMMARY
-==============================================================================================================
-Camera ID             : BOP_NORTH_SECTOR_CAM_01
-Session Ended         : 2026-10-08 22:47:54.504
-Total Video Frames    : 360 (00:00:12.000)
-Processed Video Length: 12.00 seconds
---------------------------------------------------------------------------------------------------------------
-Unique Humans Tracked : 9
-Unique Vehicles       : 3
-Critical Alerts       : 23
-Warnings Triggered    : 6
-Information Events    : 20
-Total Logged Events   : 49
-==============================================================================================================
-```
-
-### 2. Machine-Readable JSONL Log (`border_events.jsonl`)
-
-```json
-{"wall_time": "2026-10-08T22:47:42.984102", "video_timecode": "00:00:05.299", "frame_idx": 159, "camera_id": "BOP_NORTH_SECTOR_CAM_01", "severity": "CRITICAL", "category": "VIRTUAL_FENCE_BREACH", "entity_type": "Person", "track_id": 2, "confidence": 0.86, "bbox": [720, 215, 818, 469], "details": "Intruder breached Border Virtual Fence line! Vector: Inbound (Restricted Crossing)", "extra": {"direction": "Inbound (Restricted Crossing)", "crossing_point": [769, 469]}}
-```
-
----
-
-## 🧪 Synthetic Test Generator
-
-To generate a new synthetic test video for quick verification:
+Generate a synthetic 18-second household video featuring static idle periods, vehicle arrivals, couriers carrying packages, and doorstep entries:
 
 ```bash
-python create_test_video.py
+py create_household_video.py
 ```
-This produces `border_cctv_simulation.mp4` featuring an outpost background, walking intruders, crossing trajectories, loitering persons, vehicle motion with number plates, and nightfall lighting.
+This produces `household_cctv_simulation.mp4` for immediate testing.
